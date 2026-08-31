@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Format and unit test
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install XcodeBuildMCP
+        run: npm install --global --no-audit --no-fund xcodebuildmcp@2.7.0
+
+      - name: Check Swift formatting
+        run: >-
+          swift format lint --strict --recursive
+          wasmbox wasmboxPackage/Sources wasmboxPackage/Tests
+          wasmboxPackage/Package.swift wasmboxUITests
+
+      # AppIntents/XCUITest needs a team-signed app and interactive macOS session.
+      - name: Test macOS workspace unit target
+        run: >-
+          xcodebuildmcp macos test
+          --workspace-path wasmbox.xcworkspace
+          --scheme wasmbox
+          --configuration Debug
+          --extra-args=CODE_SIGNING_ALLOWED=NO
+          --extra-args=-only-testing:wasmboxFeatureTests
+          --output text
+
+
+  automerge:
+    runs-on: ubuntu-latest
+    needs: test
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.user.login == 'renovate[bot]'
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Auto-merge Renovate pull request
+        uses: pascalgn/automerge-action@7961b8b5eec56cc088c140b56d864285eabd3f67 # v0.16.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_LABELS: automerge

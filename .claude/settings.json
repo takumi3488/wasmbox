@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "swift format format --in-place --recursive wasmbox wasmboxPackage/Sources wasmboxPackage/Tests wasmboxPackage/Package.swift wasmboxUITests",
+            "type": "command"
+          }
+        ],
+        "matcher": "Write|Edit|MultiEdit"
+      }
+    ]
+  }
+}
