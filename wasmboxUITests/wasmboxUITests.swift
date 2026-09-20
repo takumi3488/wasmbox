@@ -1,5 +1,7 @@
-import AppIntentsTesting
 import XCTest
+
+#if canImport(AppIntentsTesting)
+import AppIntentsTesting
 
 @available(macOS 27.0, *)
 final class WasmboxUITests: XCTestCase {
@@ -98,3 +100,4 @@ final class WasmboxUITests: XCTestCase {
     XCTAssertTrue(createdRow.waitForExistence(timeout: 5))
   }
 }
+#endif
